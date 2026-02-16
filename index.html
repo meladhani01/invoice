@@ -30,7 +30,6 @@
             width: 210mm; 
             min-height: 297mm;
             padding: 15mm;
-            /* REMOVED margin: 0 auto; to fix PDF shifting issue */
             margin: 0; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             /* System fonts for PDF reliability - Critical for Arabic support */
@@ -164,17 +163,17 @@
             align-items: center;
         }
 
-        /* Stamp Position */
+        /* Stamp Position - UPDATED SIZE */
         .stamp-container {
-            margin-top: 60px;
-            margin-right: 40px;
+            margin-top: 50px;
+            margin-right: 30px;
             text-align: left;
             position: relative;
-            height: 150px;
+            height: 200px; /* Increased height container */
         }
         
         .stamp-img { 
-            width: 160px; 
+            width: 220px; /* Increased width from 160px */
             transform: rotate(-10deg);
             opacity: 0.9;
         }
@@ -253,7 +252,6 @@
         </div>
 
         <!-- INVOICE PREVIEW AREA -->
-        <!-- Justify Center is important here to visually center it for the user, but margins handle PDF -->
         <div class="w-full lg:w-2/3 bg-gray-300 p-4 lg:p-8 rounded overflow-auto flex justify-center items-start">
             
             <div id="invoice-content" class="invoice-box">
@@ -354,7 +352,8 @@
                 <!-- Stamp Area -->
                 <div class="stamp-container">
                      <!-- Placeholder if no stamp -->
-                     <div id="sealPlaceholder" style="border: 2px dashed #bbb; width: 160px; height: 160px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #999; font-weight: bold; transform: rotate(-10deg);">
+                     <!-- Increased placeholder size to match image -->
+                     <div id="sealPlaceholder" style="border: 2px dashed #bbb; width: 220px; height: 180px; border-radius: 20px; display: flex; align-items: center; justify-content: center; color: #999; font-weight: bold; transform: rotate(-5deg);">
                         مكان الختم
                     </div>
                     <img id="sealPreview" src="batal.png" onerror="this.style.display='none'; document.getElementById('sealPlaceholder').style.display='flex';" class="stamp-img" style="display: none;">
@@ -448,7 +447,6 @@
             btn.innerHTML = "جاري الحفظ...";
             btn.disabled = true;
 
-            // CONFIG: Correct settings for centering without cropping
             const opt = {
                 margin: 0,
                 filename: `فاتورة_${clientName}.pdf`,
@@ -459,8 +457,6 @@
                     scrollY: 0,
                     x: 0,
                     y: 0,
-                    // width: 794px corresponds to 210mm at 96DPI. 
-                    // Setting this explicitly tells html2canvas to capture exactly A4 width.
                     width: 794, 
                     windowWidth: 800 
                 },
