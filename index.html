@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF 8">
+    <meta name="viewport" content="width=device width, initial scale=1.0">
+    <title>مولد فواتير النقل - شركة البطل للتوريدات</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts for Arabic -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- html2pdf.js for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Cairo', sans serif;
+            background-color: #f3f4f6;
+        }
+        .invoice-preview {
+            background: white;
+            /* A4 dimensions: 210mm x 297mm */
+            width: 210mm;
+            min-height: 297mm;
+            padding: 15mm;
+            margin: 0 auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-sizing: border box;
+            position: relative;
+        }
+        /* Rotated stamp effect */
+        .stamp-rotate {
+            transform: rotate( 5deg);
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #invoice-content, #invoice-content * {
+                visibility: visible;
+            }
+            #invoice-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body class="text gray 800">
+
+    <div class="container mx auto p 4 md:p 8">
+        <header class="mb 8 text center no print">
+            <h1 class="text 3xl font bold text blue 800 mb 2">برنامج إصدار فواتير النقل   شركة البطل</h1>
+            <p class="text gray 600">أدخل البيانات في النموذج أدناه لتوليد الفاتورة وتحميلها</p>
+        </header>
+
+        <div class="flex flex col lg:flex row gap 8">
+            <!-- Input Form Section -->
+            <div class="w-full lg:w-1/3 no-print">
+                <div class="bg-white rounded-lg shadow-lg p-6 sticky top-4">
+                    <h2 class="text-xl font-bold mb-4 border-b pb-2 text-blue-700">إدخال البيانات</h2>
+                    
+                    <form id="invoiceForm" onsubmit="event.preventDefault();">
+                        <!-- Customer Details -->
+                        <div class="mb-6">
+                            <h3 class="font-semibold text-gray-700 mb-3 bg-gray-100 p-2 rounded">بيانات العميل</h3>
+                            
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">رقم عميل النقل</label>
+                                <input type="text" id="customerNo" placeholder="44798" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" oninput="updateInvoice()">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">اسم العميل</label>
+                                <input type="text" id="customerName" placeholder="كونكورد" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" oninput="updateInvoice()">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">تليفون العميل</label>
+                                <input type="text" id="customerPhone" placeholder="01122360678" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" oninput="updateInvoice()">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">عنوان العميل</label>
+                                <textarea id="customerAddress" rows="2" placeholder="فندق ميلتون مرسى علم..." class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" oninput="updateInvoice()"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Order Details -->
+                        <div class="mb-6">
+                            <h3 class="font-semibold text-gray-700 mb-3 bg-gray-100 p-2 rounded">تفاصيل الطلبية</h3>
+                            
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">بيان الكمية</label>
+                                <input type="text" id="quantityStatement" placeholder="153.43 متر (10 قطعة)" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" oninput="updateInvoice()">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">قيمة الطلبية</label>
+                                <input type="text" id="orderValue" placeholder="177,097" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" oninput="updateInvoice()">
+                            </div>
+                            
+                             <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">التاريخ</label>
+                                <input type="date" id="invoiceDate" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" oninput="updateInvoice()">
+                            </div>
+                        </div>
+
+                        <!-- Seal Upload -->
+                        <div class="mb-6 border-t pt-4">
+                            <h3 class="font-semibold text-gray-700 mb-3 bg-gray-100 p-2 rounded">ختم الشركة</h3>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">اختر صورة الختم (batal.png)</label>
+                                <input type="file" id="sealInput" accept="image/*" class="w-full p-1 border rounded text-sm" onchange="loadSeal(event)">
+                                <p class="text-xs text-gray-500 mt-1">سيتم وضع الختم تلقائياً أسفل الفاتورة.</p>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex gap-2">
+                            <button onclick="downloadPDF()" class="flex-1 bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition flex items-center justify-center gap-2 font-bold">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                تحميل PDF
+                            </button>
+                             <button onclick="resetForm()" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 text-gray-600 transition">
+                                جديد
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="w-full lg:w-2/3 overflow-x-auto bg-gray-200 p-4 rounded-lg flex justify-center">
+                
+                <!-- Invoice Template (A4 Size) -->
+                <div id="invoice-content" class="invoice-preview relative flex flex-col justify-between">
+                    <div>
+                        <!-- Header -->
+                        <div class="flex justify-between items-start border-b-2 border-blue-800 pb-4 mb-8">
+                            <div>
+                                <h1 class="text-3xl font-bold text-blue-900 mb-2">شركة البطل للتوريدات</h1>
+                                <div class="text-sm font-semibold text-gray-700 space-y-1">
+                                    <p>مسؤول: م/ عماد</p>
+                                    <p>تليفون - واتساب: <span dir="ltr" class="font-mono">01125295004</span></p>
+                                </div>
+                                <div class="text-xs text-gray-600 mt-3 flex flex-col gap-1 font-mono">
+                                    <span>س.ت: 428520</span>
+                                    <span>ب.ض: <span dir="ltr">741-667-773</span></span>
+                                </div>
+                            </div>
+                            <div class="text-left flex flex-col items-end">
+                                <h2 class="text-xl font-bold text-gray-700 mb-2">إيصال نقل بضائع</h2>
+                                <div class="text-sm text-gray-500">التاريخ: <span id="displayDate" class="font-semibold text-gray-800">--</span></div>
+                                <div class="text-sm text-gray-500 mt-1">رقم المستند: <span class="font-mono text-gray-800">AUTO-GEN</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Customer Info Section -->
+                        <div class="mb-8">
+                            <h2 class="text-lg font-bold text-white bg-blue-800 px-3 py-1 inline-block rounded-md mb-4">بيانات العميل</h2>
+                            <table class="w-full border-collapse border border-gray-300 text-sm">
+                                <tr class="bg-gray-50">
+                                    <td class="border border-gray-300 p-3 font-bold w-1/4">رقم عميل النقل</td>
+                                    <td class="border border-gray-300 p-3" id="displayCustomerNo">--</td>
+                                    <td class="border border-gray-300 p-3 font-bold w-1/4">تليفون العميل</td>
+                                    <td class="border border-gray-300 p-3" id="displayCustomerPhone">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="border border-gray-300 p-3 font-bold">اسم العميل</td>
+                                    <td class="border border-gray-300 p-3" colspan="3" id="displayCustomerName">--</td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="border border-gray-300 p-3 font-bold">عنوان العميل</td>
+                                    <td class="border border-gray-300 p-3" colspan="3" id="displayCustomerAddress">--</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- Order Info Section -->
+                        <div class="mb-8">
+                            <h2 class="text-lg font-bold text-white bg-blue-800 px-3 py-1 inline-block rounded-md mb-4">تفاصيل الطلبية</h2>
+                            <table class="w-full border-collapse border border-gray-300 text-sm">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="border border-gray-300 p-3 text-right">البيان / الوصف</th>
+                                        <th class="border border-gray-300 p-3 text-left w-1/3">القيمة / الكمية</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="border border-gray-300 p-3 font-bold">بيان الكمية</td>
+                                        <td class="border border-gray-300 p-3 text-left font-mono text-lg" id="displayQuantity">--</td>
+                                    </tr>
+                                    <tr class="bg-gray-50">
+                                        <td class="border border-gray-300 p-3 font-bold">قيمة الطلبية</td>
+                                        <td class="border border-gray-300 p-3 text-left font-bold text-lg text-blue-800" id="displayOrderValue">--</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Footer / Seal Section -->
+                    <div class="mt-8 pt-4 flex flex-col items-center justify-center text-center">
+                        
+                        <!-- Seal Image Container -->
+                        <div class="mb-4 relative">
+                            <!-- Attempt to load local batal.png by default, fallback to nothing if not found until user uploads -->
+                            <img id="sealPreview" src="batal.png" onerror="this.style.display='none'" alt="ختم الشركة" class="w-64 h-auto object-contain stamp-rotate">
+                            
+                            <!-- Placeholder text if image not visible (handled by JS logic mostly, but good fallback) -->
+                            <div id="sealPlaceholder" class="hidden text-gray-400 text-sm border-2 border-dashed border-gray-300 p-4 rounded">
+                                يرجى تحميل صورة الختم
+                            </div>
+                        </div>
+
+                        <p class="font-bold text-blue-900 text-lg">شركة البطل للتوريدات</p>
+                    </div>
+                    
+                    <div class="absolute bottom-4 left-0 w-full text-center text-xs text-gray-400">
+                        تم إنشاء هذا المستند إلكترونياً
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set default date to today
+        document.getElementById('invoiceDate').valueAsDate = new Date();
+
+        // Update function to sync inputs with preview
+        function updateInvoice() {
+            // Mapping input IDs to Display IDs
+            const fields = {
+                'customerNo': 'displayCustomerNo',
+                'customerName': 'displayCustomerName',
+                'customerPhone': 'displayCustomerPhone',
+                'customerAddress': 'displayCustomerAddress',
+                'quantityStatement': 'displayQuantity',
+                'orderValue': 'displayOrderValue',
+                'invoiceDate': 'displayDate'
+            };
+
+            for (const [inputId, displayId] of Object.entries(fields)) {
+                const inputElement = document.getElementById(inputId);
+                const displayElement = document.getElementById(displayId);
+                
+                if(inputElement && displayElement) {
+                    let value = inputElement.value;
+                    if (!value) value = "--"; // Default placeholder
+                    displayElement.innerText = value;
+                }
+            }
+        }
+
+        // Function to load the seal image
+        function loadSeal(event) {
+            const file = event.target.files[0];
+            const img = document.getElementById('sealPreview');
+            const placeholder = document.getElementById('sealPlaceholder');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    placeholder.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Initial check for image (in case it fails to load immediately)
+        const sealImg = document.getElementById('sealPreview');
+        sealImg.onerror = function() {
+            this.style.display = 'none';
+            document.getElementById('sealPlaceholder').classList.remove('hidden');
+        };
+        sealImg.onload = function() {
+             this.style.display = 'block';
+             document.getElementById('sealPlaceholder').classList.add('hidden');
+        }
+
+        // PDF Generation Function
+        function downloadPDF() {
+            const element = document.getElementById('invoice content');
+            const customerName = document.getElementById('customerName').value || 'عميل';
+            const dateStr = new Date().toISOString().slice(0,10);
+            
+            const opt = {
+                margin:       0,
+                filename:     `فاتورة_نقل_${customerName}_${dateStr}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true, 
+                    scrollY: 0,
+                    windowWidth: document.documentElement.offsetWidth 
+                },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            const btn = document.querySelector('button[onclick="downloadPDF()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'جاري التحميل...';
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                btn.innerHTML = originalText;
+            }).catch(err => {
+                console.error("PDF generation error:", err);
+                btn.innerHTML = originalText;
+                alert('حدث خطأ أثناء تحميل الملف.');
+            });
+        }
+        
+        function resetForm() {
+            document.getElementById('invoiceForm').reset();
+            document.getElementById('invoiceDate').valueAsDate = new Date();
+            updateInvoice();
+            // Reset image if needed
+            // document.getElementById('sealPreview').src = "batal.png"; 
+        }
+
+        // Initialize preview on load
+        updateInvoice();
+    </script>
+</body>
+</html>
