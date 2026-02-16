@@ -3,404 +3,490 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مولد فواتير النقل - شركة البطل للتوريدات</title>
+    <title>فاتورة نظام مؤسسي - شركة البطل</title>
     
-    <!-- Tailwind CSS for styling -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Google Fonts for Arabic -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <!-- html2pdf.js for PDF generation -->
+    <!-- html2pdf.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- JsBarcode -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
     <style>
+        /* UI Font */
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+
         body {
             font-family: 'Cairo', sans-serif;
-            background-color: #f3f4f6;
-            -webkit-font-smoothing: antialiased;
+            background-color: #e5e7eb;
         }
-        
-        /* Invoice Container - A4 Fixed Dimensions */
-        .invoice-preview {
+
+        /* --- ENTERPRISE INVOICE STYLES (A4) --- */
+        .invoice-box {
             background: white;
-            width: 210mm; /* Fixed A4 width */
-            min-height: 297mm; /* Fixed A4 height */
+            /* A4 dimensions: 210mm width, 297mm height */
+            width: 210mm; 
+            min-height: 297mm;
             padding: 15mm;
-            margin: 0 auto;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            /* REMOVED margin: 0 auto; to fix PDF shifting issue */
+            margin: 0; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            /* System fonts for PDF reliability - Critical for Arabic support */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            line-height: 1.4;
             box-sizing: border-box;
             position: relative;
-            /* Critical for text clarity in PDF */
-            font-size: 14px; 
-            line-height: 1.5;
+            font-size: 14px;
         }
 
-        /* Stamp rotation effect */
-        .stamp-rotate {
-            transform: rotate(-5deg);
+        /* Header Section */
+        .erp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid #1a1a1a;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .company-branding h1 {
+            font-size: 32px;
+            font-weight: 800;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+            text-transform: uppercase;
         }
 
-        /* Scrollbar styling for preview area */
-        .preview-container::-webkit-scrollbar {
-            height: 8px;
+        /* Info Blocks */
+        .info-section {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 40px;
         }
-        .preview-container::-webkit-scrollbar-track {
-            background: #e5e7eb;
+        
+        .info-box {
+            flex: 1;
+            border: 1px solid #e5e7eb;
             border-radius: 4px;
+            overflow: hidden;
         }
-        .preview-container::-webkit-scrollbar-thumb {
-            background: #9ca3af;
-            border-radius: 4px;
+        
+        .box-header {
+            background-color: #f3f4f6;
+            color: #111;
+            padding: 10px 15px;
+            font-weight: 800;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
+        }
+        
+        .box-content {
+            padding: 15px;
         }
 
-        /* Print specific styles */
+        .data-row {
+            display: flex;
+            margin-bottom: 10px;
+            align-items: baseline;
+            border-bottom: 1px dashed #f3f4f6;
+            padding-bottom: 4px;
+        }
+        .data-row:last-child {
+            border-bottom: none;
+        }
+        
+        .data-label {
+            width: 90px;
+            color: #666;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .data-value {
+            flex: 1;
+            font-weight: 700;
+            color: #000;
+            font-size: 14px;
+        }
+
+        /* ERP Style Table */
+        .erp-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .erp-table th {
+            background-color: #1a1a1a; /* Dark Header */
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 14px;
+            border: 1px solid #1a1a1a;
+        }
+        
+        .erp-table td {
+            padding: 15px 12px;
+            border: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }
+        
+        .erp-table tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+
+        /* Total Section */
+        .total-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        
+        .total-box {
+            width: 50%;
+            border: 2px solid #1a1a1a;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background-color: #f3f4f6;
+            font-weight: 800;
+            font-size: 18px;
+            color: #000;
+            align-items: center;
+        }
+
+        /* Stamp Position */
+        .stamp-container {
+            margin-top: 60px;
+            margin-right: 40px;
+            text-align: left;
+            position: relative;
+            height: 150px;
+        }
+        
+        .stamp-img { 
+            width: 160px; 
+            transform: rotate(-10deg);
+            opacity: 0.9;
+        }
+
+        /* Helpers */
+        .ltr { direction: ltr; display: inline-block; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        
+        /* Capture fix */
+        #invoice-content {
+            margin: 0; 
+            transform-origin: top left;
+        }
+
         @media print {
-            body * {
-                visibility: hidden;
-            }
-            #invoice-content, #invoice-content * {
-                visibility: visible;
-            }
-            #invoice-content {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                margin: 0;
-                padding: 0;
-                box-shadow: none;
-            }
-            .no-print {
-                display: none;
-            }
+            body * { visibility: hidden; }
+            .invoice-box, .invoice-box * { visibility: visible; }
+            .invoice-box { position: absolute; left: 0; top: 0; margin: 0; padding: 0; }
+            .no-print { display: none; }
+            .erp-table th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>
-<body class="text-gray-800">
+<body>
 
-    <div class="container mx-auto p-4 md:p-6 lg:p-8 max-w-7xl">
-        <header class="mb-6 text-center no-print">
-            <h1 class="text-2xl md:text-3xl font-bold text-blue-800 mb-2">برنامج إصدار فواتير النقل - شركة البطل</h1>
-            <p class="text-sm md:text-base text-gray-600">أدخل البيانات لتوليد الفاتورة (جاهز للطباعة والتحميل)</p>
-        </header>
+    <div class="container mx-auto p-4 lg:p-6 flex flex-col lg:flex-row gap-6">
+        
+        <!-- SIDEBAR CONTROLS -->
+        <div class="w-full lg:w-1/3 no-print">
+            <div class="bg-white p-5 rounded shadow-sm sticky top-4 border-t-4 border-gray-800">
+                <h2 class="text-lg font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    بيانات الفاتورة
+                </h2>
+                
+                <form id="invoiceForm" onsubmit="event.preventDefault();" class="space-y-4">
+                    <!-- Client -->
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-gray-500 uppercase">العميل</label>
+                        <input type="text" id="customerName" placeholder="اسم العميل" class="w-full p-2 border rounded text-sm focus:ring-1 focus:ring-black" oninput="updateInvoice()">
+                        <div class="flex gap-2">
+                            <input type="text" id="customerNo" placeholder="رقم العميل" class="w-1/2 p-2 border rounded text-sm focus:ring-1 focus:ring-black" oninput="updateInvoice()">
+                            <input type="text" id="customerPhone" placeholder="الهاتف" class="w-1/2 p-2 border rounded text-sm focus:ring-1 focus:ring-black" oninput="updateInvoice()">
+                        </div>
+                        <textarea id="customerAddress" rows="2" placeholder="العنوان" class="w-full p-2 border rounded text-sm focus:ring-1 focus:ring-black" oninput="updateInvoice()"></textarea>
+                    </div>
 
-        <div class="flex flex-col lg:flex-row gap-6 lg:gap-8">
+                    <!-- Details -->
+                    <div class="space-y-2 pt-2 border-t">
+                        <label class="text-xs font-bold text-gray-500 uppercase">التفاصيل</label>
+                        <input type="text" id="quantityStatement" placeholder="بيان الكمية" class="w-full p-2 border rounded text-sm focus:ring-1 focus:ring-black" oninput="updateInvoice()">
+                        <div class="flex gap-2">
+                            <input type="text" id="orderValue" placeholder="القيمة (مثال: 1000)" class="w-1/2 p-2 border rounded text-sm focus:ring-1 focus:ring-black" oninput="updateInvoice()">
+                            <input type="date" id="invoiceDate" class="w-1/2 p-2 border rounded text-sm focus:ring-1 focus:ring-black" oninput="updateInvoice()">
+                        </div>
+                    </div>
+
+                    <!-- Seal -->
+                    <div class="pt-2">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">الختم</label>
+                        <input type="file" id="sealInput" accept="image/*" class="w-full text-xs" onchange="loadSeal(event)">
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="pt-4 flex gap-2">
+                        <button id="downloadBtn" onclick="downloadPDF()" class="flex-1 bg-gray-900 text-white py-3 rounded shadow hover:bg-black transition font-bold text-sm">
+                            حفظ PDF
+                        </button>
+                        <button onclick="resetForm()" class="px-4 py-3 border rounded hover:bg-gray-50 text-sm">
+                            جديد
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- INVOICE PREVIEW AREA -->
+        <!-- Justify Center is important here to visually center it for the user, but margins handle PDF -->
+        <div class="w-full lg:w-2/3 bg-gray-300 p-4 lg:p-8 rounded overflow-auto flex justify-center items-start">
             
-            <!-- SECTION 1: Input Form (Sticky on Desktop) -->
-            <div class="w-full lg:w-1/3 no-print order-2 lg:order-1">
-                <div class="bg-white rounded-xl shadow-lg p-5 sticky lg:top-4 border border-gray-100">
-                    <h2 class="text-xl font-bold mb-4 border-b pb-2 text-blue-700 flex items-center gap-2">
-                        <span>📝</span> إدخال البيانات
-                    </h2>
+            <div id="invoice-content" class="invoice-box">
+                
+                <!-- Header -->
+                <div class="erp-header">
+                    <div class="company-branding">
+                        <h1>شركة البطل للتوريدات</h1>
+                        <div style="font-size: 14px; color: #444; margin-top: 10px; line-height: 1.6;">
+                            <div>سجل تجاري: <span class="ltr">428520</span></div>
+                            <div>بطاقة ضريبية: <span class="ltr">741-667-773</span></div>
+                            <div>مسؤول: م/ عماد | <span class="ltr">01125295004</span></div>
+                        </div>
+                    </div>
                     
-                    <form id="invoiceForm" onsubmit="event.preventDefault();">
-                        <!-- Customer Details Group -->
-                        <div class="mb-5 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                            <h3 class="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wide text-blue-600">بيانات العميل</h3>
-                            
-                            <div class="space-y-3">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1">رقم عميل النقل</label>
-                                    <input type="text" id="customerNo" placeholder="مثال: 44798" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm" oninput="updateInvoice()">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1">اسم العميل</label>
-                                    <input type="text" id="customerName" placeholder="مثال: كونكورد" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm" oninput="updateInvoice()">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1">تليفون العميل</label>
-                                    <input type="tel" id="customerPhone" placeholder="01xxxxxxxxx" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm" oninput="updateInvoice()">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1">عنوان العميل</label>
-                                    <textarea id="customerAddress" rows="2" placeholder="العنوان بالتفصيل..." class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm" oninput="updateInvoice()"></textarea>
-                                </div>
-                            </div>
+                    <div style="text-align: left;">
+                        <div class="doc-title" style="font-weight: 800; color: #1a1a1a; letter-spacing: 0; font-size: 28px;">فاتورة</div>
+                        <!-- Generated Barcode -->
+                        <div style="margin-top: 15px;">
+                            <svg id="barcode"></svg>
                         </div>
-
-                        <!-- Order Details Group -->
-                        <div class="mb-5 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                            <h3 class="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wide text-blue-600">تفاصيل الطلبية</h3>
-                            
-                            <div class="space-y-3">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1">بيان الكمية</label>
-                                    <input type="text" id="quantityStatement" placeholder="مثال: 153.43 متر (10 قطعة)" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm" oninput="updateInvoice()">
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1">قيمة الطلبية</label>
-                                    <input type="text" id="orderValue" placeholder="مثال: 177,097" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm" oninput="updateInvoice()">
-                                </div>
-                                
-                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1">التاريخ</label>
-                                    <input type="date" id="invoiceDate" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm" oninput="updateInvoice()">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Seal Upload -->
-                        <div class="mb-5 border-t border-dashed border-gray-300 pt-4">
-                            <h3 class="font-bold text-sm text-gray-700 mb-2">ختم الشركة</h3>
-                            <div class="bg-blue-50 p-3 rounded border border-blue-100">
-                                <label class="block text-xs text-gray-600 mb-1">صورة الختم (batal.png)</label>
-                                <input type="file" id="sealInput" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200" onchange="loadSeal(event)">
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex gap-3 mt-6">
-                            <button id="downloadBtn" onclick="downloadPDF()" class="flex-1 bg-blue-700 text-white py-3 px-4 rounded-lg shadow hover:bg-blue-800 transition active:scale-95 flex items-center justify-center gap-2 font-bold text-sm md:text-base">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                </svg>
-                                <span>تحميل PDF</span>
-                            </button>
-                             <button onclick="resetForm()" class="px-4 py-3 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 text-gray-700 transition active:scale-95 font-semibold text-sm">
-                                جديد
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- SECTION 2: Preview (Scrollable on Mobile) -->
-            <div class="w-full lg:w-2/3 order-1 lg:order-2">
-                <div class="bg-gray-200 p-2 md:p-4 rounded-xl shadow-inner preview-container overflow-x-auto">
-                    <!-- Hint for mobile users -->
-                    <div class="lg:hidden text-center text-xs text-gray-500 mb-2 flex items-center justify-center gap-1">
-                        <svg class="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                        اسحب لليسار لرؤية كامل الفاتورة
                     </div>
+                </div>
 
-                    <!-- Invoice Template (A4 Size) -->
-                    <!-- Added ID for capture -->
-                    <div id="invoice-content" class="invoice-preview flex flex-col justify-between">
-                        <div>
-                            <!-- Header -->
-                            <div class="flex justify-between items-start border-b-2 border-blue-900 pb-6 mb-8">
-                                <div>
-                                    <h1 class="text-3xl font-extrabold text-blue-900 mb-3 tracking-tight">شركة البطل للتوريدات</h1>
-                                    <div class="text-sm font-semibold text-gray-700 space-y-1.5 leading-relaxed">
-                                        <p class="flex items-center gap-2">
-                                            <span class="text-blue-600 w-4">👤</span> 
-                                            مسؤول: م/ عماد
-                                        </p>
-                                        <p class="flex items-center gap-2">
-                                            <span class="text-blue-600 w-4">📞</span> 
-                                            تليفون - واتساب: <span dir="ltr" class="font-mono text-gray-900">01125295004</span>
-                                        </p>
-                                    </div>
-                                    <div class="text-xs text-gray-500 mt-4 flex flex-col gap-1 font-mono border-r-2 border-gray-300 pr-2 mr-1">
-                                        <span>س.ت: 428520</span>
-                                        <span>ب.ض: <span dir="ltr">741-667-773</span></span>
-                                    </div>
-                                </div>
-                                <div class="text-left flex flex-col items-end">
-                                    <div class="bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 mb-3">
-                                        <h2 class="text-xl font-bold text-blue-800">إيصال نقل بضائع</h2>
-                                    </div>
-                                    <div class="text-sm text-gray-600">التاريخ: <span id="displayDate" class="font-bold text-gray-900">--</span></div>
-                                    <div class="text-sm text-gray-600 mt-1">رقم المستند: <span class="font-mono bg-gray-100 px-2 py-0.5 rounded text-gray-800">AUTO-GEN</span></div>
-                                </div>
+                <!-- Info Grid -->
+                <div class="info-section">
+                    <!-- Invoice Meta -->
+                    <div class="info-box">
+                        <div class="box-header">بيانات الفاتورة</div>
+                        <div class="box-content">
+                            <div class="data-row">
+                                <span class="data-label">التاريخ:</span>
+                                <span class="data-value ltr" style="text-align: right;" id="displayDate">--</span>
                             </div>
-
-                            <!-- Customer Info Section -->
-                            <div class="mb-10">
-                                <div class="flex items-center gap-2 mb-4">
-                                    <div class="bg-blue-800 text-white p-1.5 rounded">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <h2 class="text-lg font-bold text-blue-900">بيانات العميل</h2>
-                                </div>
-                                
-                                <table class="w-full border-collapse border border-gray-300 text-sm shadow-sm">
-                                    <tr class="bg-gray-50">
-                                        <td class="border border-gray-300 p-3 font-bold w-1/4 text-gray-700">رقم عميل النقل</td>
-                                        <td class="border border-gray-300 p-3 bg-white" id="displayCustomerNo">--</td>
-                                        <td class="border border-gray-300 p-3 font-bold w-1/4 text-gray-700">تليفون العميل</td>
-                                        <td class="border border-gray-300 p-3 bg-white font-mono" id="displayCustomerPhone">--</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="border border-gray-300 p-3 font-bold text-gray-700">اسم العميل</td>
-                                        <td class="border border-gray-300 p-3 font-semibold text-gray-900 text-lg" colspan="3" id="displayCustomerName">--</td>
-                                    </tr>
-                                    <tr class="bg-gray-50">
-                                        <td class="border border-gray-300 p-3 font-bold text-gray-700">عنوان العميل</td>
-                                        <td class="border border-gray-300 p-3 bg-white" colspan="3" id="displayCustomerAddress">--</td>
-                                    </tr>
-                                </table>
+                            <div class="data-row">
+                                <span class="data-label">الرقم:</span>
+                                <span class="data-value ltr" style="text-align: right;"><span id="invNum">0000</span></span>
                             </div>
-
-                            <!-- Order Info Section -->
-                            <div class="mb-8">
-                                <div class="flex items-center gap-2 mb-4">
-                                    <div class="bg-blue-800 text-white p-1.5 rounded">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" />
-                                            <path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <h2 class="text-lg font-bold text-blue-900">تفاصيل الطلبية</h2>
-                                </div>
-
-                                <table class="w-full border-collapse border border-gray-300 text-sm shadow-sm">
-                                    <thead class="bg-gray-100 text-gray-700">
-                                        <tr>
-                                            <th class="border border-gray-300 p-3 text-right font-bold">البيان / الوصف</th>
-                                            <th class="border border-gray-300 p-3 text-left w-1/3 font-bold">القيمة / الكمية</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td class="border border-gray-300 p-4 font-bold text-gray-800">بيان الكمية</td>
-                                            <td class="border border-gray-300 p-4 text-left font-mono text-lg bg-gray-50" id="displayQuantity">--</td>
-                                        </tr>
-                                        <tr class="bg-blue-50">
-                                            <td class="border border-blue-200 p-4 font-bold text-blue-900">قيمة الطلبية</td>
-                                            <td class="border border-blue-200 p-4 text-left font-bold text-xl text-blue-800 font-mono" id="displayOrderValue">--</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                             <div class="data-row">
+                                <span class="data-label">الحالة:</span>
+                                <span class="data-value" style="color: green;">معتمد</span>
                             </div>
-                        </div>
-
-                        <!-- Footer / Seal Section -->
-                        <div class="mt-8 pt-8 flex flex-col items-center justify-center text-center border-t border-gray-200">
-                            
-                            <!-- Seal Image Container -->
-                            <div class="mb-4 relative min-h-[100px] flex items-center justify-center">
-                                <!-- Default to loading batal.png, handled by JS -->
-                                <img id="sealPreview" src="batal.png" onerror="this.style.display='none'; document.getElementById('sealPlaceholder').classList.remove('hidden');" alt="ختم الشركة" class="w-64 h-auto object-contain stamp-rotate filter multiply-blend-mode">
-                                
-                                <div id="sealPlaceholder" class="hidden flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 text-gray-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    <span class="text-xs">لا يوجد ختم</span>
-                                </div>
-                            </div>
-
-                            <p class="font-bold text-blue-900 text-lg">شركة البطل للتوريدات</p>
-                            <p class="text-xs text-gray-500 mt-1">يعتمد هذا المستند رسمياً بعد إضافة الختم</p>
-                        </div>
-                        
-                        <div class="absolute bottom-4 left-0 w-full text-center text-[10px] text-gray-400 font-mono">
-                            Generated by Al-Batal System • <span id="footerDate"></span>
                         </div>
                     </div>
 
+                    <!-- Client Info -->
+                    <div class="info-box" style="flex: 1.5;">
+                        <div class="box-header">بيانات العميل</div>
+                        <div class="box-content">
+                            <div class="data-row">
+                                <span class="data-label">الاسم:</span>
+                                <span class="data-value" id="displayCustomerName" style="font-weight: 700; font-size: 16px;">--</span>
+                            </div>
+                             <div class="data-row">
+                                <span class="data-label">رقم العميل:</span>
+                                <span class="data-value" id="displayCustomerNo">--</span>
+                            </div>
+                            <div class="data-row">
+                                <span class="data-label">الهاتف:</span>
+                                <span class="data-value ltr" style="text-align: right;" id="displayCustomerPhone">--</span>
+                            </div>
+                            <div class="data-row">
+                                <span class="data-label">العنوان:</span>
+                                <span class="data-value" id="displayCustomerAddress">--</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Table -->
+                <table class="erp-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 10%;">#</th>
+                            <th style="width: 60%; text-align: right;">بيان الطلبية / الكمية</th>
+                            <th style="width: 30%;">القيمة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-center">01</td>
+                            <td style="font-weight: 700; font-size: 15px;" id="displayQuantity">--</td>
+                            <td class="ltr text-center" style="font-weight: 800; font-size: 16px;" id="displayOrderValueRow">--</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Totals -->
+                <div class="total-section">
+                    <div class="total-box">
+                        <div class="total-row">
+                            <span>الإجمالي المستحق</span>
+                            <span id="displayOrderValue" class="ltr">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stamp Area -->
+                <div class="stamp-container">
+                     <!-- Placeholder if no stamp -->
+                     <div id="sealPlaceholder" style="border: 2px dashed #bbb; width: 160px; height: 160px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #999; font-weight: bold; transform: rotate(-10deg);">
+                        مكان الختم
+                    </div>
+                    <img id="sealPreview" src="batal.png" onerror="this.style.display='none'; document.getElementById('sealPlaceholder').style.display='flex';" class="stamp-img" style="display: none;">
+                </div>
+                
+                <!-- Footer -->
+                <div style="position: absolute; bottom: 15mm; left: 0; width: 100%; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 15px;">
+                    تم إصدار هذه الفاتورة إلكترونياً • شركة البطل للتجارة والتوريدات • نشكركم على ثقتكم
+                </div>
+
             </div>
+
         </div>
     </div>
 
     <script>
-        // Set default dates
         const today = new Date();
         document.getElementById('invoiceDate').valueAsDate = today;
-        document.getElementById('footerDate').innerText = today.toLocaleDateString('en-GB');
+        document.getElementById('invNum').innerText = Math.floor(100000 + Math.random() * 900000);
 
-        // Update function to sync inputs with preview
+        function generateBarcode() {
+            JsBarcode("#barcode", document.getElementById('invNum').innerText, {
+                format: "CODE128",
+                width: 1.8,
+                height: 50,
+                displayValue: false,
+                lineColor: "#1a1a1a"
+            });
+        }
+        
+        setTimeout(generateBarcode, 500);
+
         function updateInvoice() {
-            const fields = {
+            const map = {
                 'customerNo': 'displayCustomerNo',
                 'customerName': 'displayCustomerName',
                 'customerPhone': 'displayCustomerPhone',
                 'customerAddress': 'displayCustomerAddress',
-                'quantityStatement': 'displayQuantity',
-                'orderValue': 'displayOrderValue',
-                'invoiceDate': 'displayDate'
+                'quantityStatement': 'displayQuantity'
             };
 
-            for (const [inputId, displayId] of Object.entries(fields)) {
-                const inputElement = document.getElementById(inputId);
-                const displayElement = document.getElementById(displayId);
-                
-                if(inputElement && displayElement) {
-                    let value = inputElement.value;
-                    if (!value) value = "--";
-                    displayElement.innerText = value;
-                }
+            for (let [inId, outId] of Object.entries(map)) {
+                let val = document.getElementById(inId).value;
+                document.getElementById(outId).innerText = val || "--";
+            }
+
+            let val = document.getElementById('orderValue').value;
+            let displayVal = val || "--";
+            document.getElementById('displayOrderValue').innerText = displayVal;
+            document.getElementById('displayOrderValueRow').innerText = displayVal;
+
+            let dateVal = document.getElementById('invoiceDate').value;
+            if(dateVal) {
+                let d = new Date(dateVal);
+                document.getElementById('displayDate').innerText = d.toLocaleDateString('en-GB');
             }
         }
 
-        // Handle Seal Image Loading
         function loadSeal(event) {
             const file = event.target.files[0];
-            const img = document.getElementById('sealPreview');
-            const placeholder = document.getElementById('sealPlaceholder');
-
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
+                    const img = document.getElementById('sealPreview');
                     img.src = e.target.result;
                     img.style.display = 'block';
-                    placeholder.classList.add('hidden');
+                    document.getElementById('sealPlaceholder').style.display = 'none';
                 };
                 reader.readAsDataURL(file);
             }
         }
+        
+        window.onload = function() {
+            const img = document.getElementById('sealPreview');
+            img.style.display = 'none'; 
+            const tempImg = new Image();
+            tempImg.src = "batal.png";
+            tempImg.onload = function() {
+                img.src = this.src;
+                img.style.display = 'block';
+                document.getElementById('sealPlaceholder').style.display = 'none';
+            }
+        };
 
-        // --- FIXED PDF DOWNLOAD FUNCTION ---
         function downloadPDF() {
             const element = document.getElementById('invoice-content');
-            const customerName = document.getElementById('customerName').value || 'عميل';
-            const dateStr = new Date().toISOString().slice(0,10);
+            const clientName = document.getElementById('customerName').value || 'Client';
             const btn = document.getElementById('downloadBtn');
             const originalContent = btn.innerHTML;
             
-            // Show loading state
-            btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> جاري المعالجة...`;
+            btn.innerHTML = "جاري الحفظ...";
             btn.disabled = true;
 
+            // CONFIG: Correct settings for centering without cropping
             const opt = {
-                margin:       0,
-                filename:     `فاتورة_البطل_${customerName}_${dateStr}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { 
+                margin: 0,
+                filename: `فاتورة_${clientName}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
                     scale: 2, 
                     useCORS: true, 
-                    // CRITICAL FIX FOR MOBILE: Force a large window width
-                    // This prevents the PDF from being cropped on small screens
-                    windowWidth: 1200, 
-                    scrollY: 0
+                    scrollY: 0,
+                    x: 0,
+                    y: 0,
+                    // width: 794px corresponds to 210mm at 96DPI. 
+                    // Setting this explicitly tells html2canvas to capture exactly A4 width.
+                    width: 794, 
+                    windowWidth: 800 
                 },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            html2pdf().set(opt).from(element).save()
-                .then(() => {
-                    // Success
-                    btn.innerHTML = originalContent;
-                    btn.disabled = false;
-                })
-                .catch(err => {
-                    // Error Handling
-                    console.error("PDF Error:", err);
-                    alert("عذراً، حدث خطأ أثناء تحميل الملف.\nتأكد من أن صورة الختم صالحة وحاول مرة أخرى.\n\nتفاصيل الخطأ: " + err.message);
-                    btn.innerHTML = originalContent;
-                    btn.disabled = false;
-                });
+            html2pdf().set(opt).from(element).save().then(() => {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }).catch(err => {
+                alert("خطأ: " + err.message);
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            });
         }
-        
+
         function resetForm() {
-            if(confirm('هل أنت متأكد من مسح جميع البيانات؟')) {
+            if(confirm('مسح البيانات؟')) {
                 document.getElementById('invoiceForm').reset();
                 document.getElementById('invoiceDate').valueAsDate = new Date();
+                document.getElementById('invNum').innerText = Math.floor(100000 + Math.random() * 900000);
+                generateBarcode();
                 updateInvoice();
-                // Optionally reset seal if needed, but keeping it is usually better UX
             }
         }
 
-        // Initialize
         updateInvoice();
     </script>
 </body>
